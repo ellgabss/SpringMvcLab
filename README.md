@@ -20,38 +20,49 @@ public class StatisticsController {
 
     private final ProductService productService;
 
-    // Constructor Injection sesuai konsep Week 3
     public StatisticsController(ProductService productService) {
         this.productService = productService;
     }
 
     @GetMapping("/statistics")
     public String showStatistics(Model model) {
+
         List<Product> products = productService.findAll();
 
-        // 1. Total semua produk
         model.addAttribute("totalProducts", products.size());
 
-        // 2. Total produk per kategori (Map)
-        Map<String, Long> categoryStats = products.stream()
-                .collect(Collectors.groupingBy(Product::getCategory, Collectors.counting()));
-        model.addAttribute("categoryStats", categoryStats);
+        List<Product> lowStockProducts = products.stream()
+                .filter(p -> p.getStock() <= 20)
+                .collect(Collectors.toList());
 
-        // 3. Produk termahal & termurah
+        model.addAttribute("lowStockProducts", lowStockProducts);
+        model.addAttribute("lowStockCount", lowStockProducts.size());
+
         Product expensive = products.stream()
-                .max(Comparator.comparing(Product::getPrice)).orElse(null);
+                .max(Comparator.comparing(Product::getPrice))
+                .orElse(null);
+
         Product cheapest = products.stream()
-                .min(Comparator.comparing(Product::getPrice)).orElse(null);
+                .min(Comparator.comparing(Product::getPrice))
+                .orElse(null);
+
         model.addAttribute("expensive", expensive);
         model.addAttribute("cheapest", cheapest);
 
-        // 4. Rata-rata harga
-        double avg = products.stream().mapToDouble(Product::getPrice).average().orElse(0.0);
+        double avg = products.stream()
+                .mapToDouble(Product::getPrice)
+                .average()
+                .orElse(0.0);
+
         model.addAttribute("avgPrice", avg);
 
-        // 5. Jumlah produk stok < 20
-        long lowStock = products.stream().filter(p -> p.getStock() < 20).count();
-        model.addAttribute("lowStockCount", lowStock);
+        Map<String, Long> categoryStats = products.stream()
+                .collect(Collectors.groupingBy(
+                        Product::getCategory,
+                        Collectors.counting()
+                ));
+
+        model.addAttribute("categoryStats", categoryStats);
 
         return "statistics";
     }
@@ -59,58 +70,184 @@ public class StatisticsController {
 
 - Template
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Statistik Gudang - Ellen</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body class="bg-light">
-    <div th:replace="~{fragments/layout :: navbar}"></div>
+<html lang="id"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::main})}">
 
-    <div class="container py-5" style="min-height: 75vh;">
-        <h2 class="text-center mb-5 fw-bold">Statistik Gudang Produk</h2>
+<body class="bg-gray-50 flex flex-col min-h-screen">
 
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title border-bottom pb-2">📦 Overview</h5>
-                        <p>Total Produk: <b th:text="${totalProducts}">0</b></p>
-                        <p class="text-danger">Stok Menipis (< 20): <b th:text="${lowStockCount}">0</b></p>
-                        <p>Rata-rata Harga: <b th:text="'Rp ' + ${#numbers.formatDecimal(avgPrice, 0, 'POINT', 0, 'COMMA')}">0</b></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title border-bottom pb-2">💰 Produk Unggulan</h5>
-                        <p>Termahal: <span th:text="${expensive?.name + ' (Rp ' + expensive?.price + ')'}">-</span></p>
-                        <p>Termurah: <span th:text="${cheapest?.name + ' (Rp ' + cheapest?.price + ')'}">-</span></p>
-                    </div>
-                </div>
-            </div>
+<main class="container mx-auto px-6 py-10 flex-grow flex justify-center w-full">
+    <div class="w-full max-w-5xl mt-2">
+        <!-- Judul -->
+        <div class="mb-10 text-center">
+            <h1 class="text-[32px] font-bold text-gray-900 leading-tight">
+                Statistik Data Produk
+            </h1>
         </div>
+</div>
 
-        <div class="card mt-4 border-0 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title border-bottom pb-2">📊 Rincian Per Kategori</h5>
-                <table class="table table-hover">
-                    <thead><tr><th>Kategori</th><th>Jumlah</th></tr></thead>
-                    <tbody>
-                        <tr th:each="entry : ${categoryStats}">
-                            <td th:text="${entry.key}">Kategori</td>
-                            <td><span class="badge bg-info text-dark" th:text="${entry.value}">0</span></td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="space-y-6">
+
+            <!-- ================= OVERVIEW STOK ================= -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center">
+                    <span class="mr-3 text-xl">📦</span>
+                    <h2 class="text-[17px] font-bold text-gray-800">
+                        Overview Stok
+                    </h2>
+                </div>
+
+                <div class="p-6 space-y-4">
+
+                    <!-- Total Produk -->
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                        <span class="text-gray-600 font-medium">
+                            Total Produk
+                        </span>
+                        <span class="bg-blue-500 text-white font-bold w-7 h-7 flex items-center justify-center rounded-full text-sm"
+                              th:text="${totalProducts}">
+                            0
+                        </span>
+                    </div>
+
+                    <!-- Stok Menipis -->
+                    <div class="border-b border-gray-100 pb-4">
+
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-gray-600 font-medium">
+                                    Stok Menipis (≤ 20)
+                                </span>
+                                <p class="text-xs text-gray-400">
+                                    Produk dengan stok 20 unit atau kurang
+                                </p>
+                            </div>
+
+                            <span class="bg-red-500 text-white font-bold w-7 h-7 flex items-center justify-center rounded-full text-sm"
+                                  th:text="${lowStockCount}">
+                                0
+                            </span>
+                        </div>
+
+                        <!-- List Produk Low Stock -->
+                        <div class="mt-3"
+                             th:if="${lowStockProducts != null and !lowStockProducts.isEmpty()}">
+
+                            <ul class="text-sm text-red-600 space-y-1 mt-2">
+                                <li th:each="p : ${lowStockProducts}">
+                                    • <span th:text="${p.name}"></span>
+                                    (<span th:text="${p.stock}"></span> unit)
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-2 text-sm text-gray-400"
+                             th:if="${lowStockProducts == null or lowStockProducts.isEmpty()}">
+                            Tidak ada produk dengan stok menipis.
+                        </div>
+
+                    </div>
+
+                    <!-- Rata-rata Harga -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 font-medium">
+                            Rata-rata Harga
+                        </span>
+                        <span class="text-green-600 font-bold"
+                              th:text="'Rp ' + ${#numbers.formatDecimal(avgPrice,1,'COMMA',0,'POINT')}">
+                            Rp 0
+                        </span>
+                    </div>
+
+                </div>
             </div>
+
+            <!-- ================= PRODUK TERMAHAL & TERMURAH ================= -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-[17px] font-bold text-gray-800">
+                        Harga Produk
+                    </h2>
+                </div>
+
+                <div class="p-6 grid md:grid-cols-2 gap-6">
+
+                    <!-- Termahal -->
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <h3 class="font-semibold text-red-700 mb-2">
+                            Produk Termahal
+                        </h3>
+
+                        <div th:if="${expensive != null}">
+                            <p class="font-bold" th:text="${expensive.name}"></p>
+                            <p class="text-sm"
+                               th:text="'Rp ' + ${#numbers.formatDecimal(expensive.price,1,'COMMA',0,'POINT')}">
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Termurah -->
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h3 class="font-semibold text-green-700 mb-2">
+                            Produk Termurah
+                        </h3>
+
+                        <div th:if="${cheapest != null}">
+                            <p class="font-bold" th:text="${cheapest.name}"></p>
+                            <p class="text-sm"
+                               th:text="'Rp ' + ${#numbers.formatDecimal(cheapest.price,1,'COMMA',0,'POINT')}">
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= JUMLAH PER KATEGORI ================= -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-[17px] font-bold text-gray-800">
+                        Jumlah Produk Per Kategori
+                    </h2>
+                </div>
+
+                <div class="p-0">
+                    <table class="min-w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-6 text-sm font-bold text-gray-500 uppercase">
+                                Kategori
+                            </th>
+                            <th class="py-3 px-6 text-sm font-bold text-gray-500 uppercase">
+                                Jumlah
+                            </th>
+                        </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-100">
+                        <tr th:each="entry : ${categoryStats}"
+                            class="hover:bg-gray-50 transition">
+
+                            <td class="py-3 px-6 font-medium text-gray-700"
+                                th:text="${entry.key}">
+                            </td>
+
+                            <td class="py-3 px-6">
+                                <span class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded"
+                                      th:text="${entry.value}">
+                                </span>
+                            </td>
+
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
+</main>
 
-    <div th:replace="~{fragments/layout :: footer}"></div>
 </body>
 </html>
