@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::main})}">
+<body>
+<main>
+    <div class="bg-white rounded-2xl shadow-xl p-8 border-t-8 border-maroon relative">
+
+        <div class="mb-6 pb-4">
+            <h1 class="text-4xl font-extrabold text-maroon mb-6" th:text="${title}">Daftar Produk</h1>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <form th:action="@{/products/search}" method="get" class="flex w-full md:w-1/3 shadow-sm rounded-lg">
+                    <input type="text" name="keyword" placeholder="Cari produk..." th:value="${keyword}"
+                           class="border border-gray-300 rounded-l-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-sky focus:border-transparent">
+                    <button type="submit" class="bg-white text-sky border border-gray-300 border-l-0 hover:bg-sky hover:text-white font-semibold py-2 px-6 rounded-r-lg transition duration-300">
+                        Cari
+                    </button>
+                </form>
+
+                <p class="text-gray-600">
+                    Menampilkan <span class="font-bold text-maroon" th:text="${totalProducts}">6</span> produk
+                </p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+            <table class="min-w-full bg-white text-left border-collapse">
+
+                <thead class="bg-maroon text-white">
+                <tr>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm w-16">No</th>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm">Nama Produk</th>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm">Kategori</th>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm">Harga</th>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm">Stok</th>
+                    <th class="py-4 px-6 font-semibold tracking-wider text-sm text-center">Aksi</th>
+                </tr>
+                </thead>
+
+                <tbody class="text-gray-700 divide-y divide-gray-200">
+                <tr th:each="product, iterStat : ${products}" class="hover:bg-sky-light/20 transition duration-150 ease-in-out">
+                    <td class="py-4 px-6 text-gray-900" th:text="${iterStat.count}">1</td>
+                    <td class="py-4 px-6 text-gray-800" th:text="${product.name}">Laptop ASUS</td>
+
+                    <td class="py-4 px-6">
+                        <a th:href="@{/products/category/{cat}(cat=${product.category})}" class="text-sky font-medium hover:text-maroon transition duration-300" th:text="${product.category}">Elektronik</a>
+                    </td>
+
+                    <td class="py-4 px-6" th:text="'Rp ' + ${#numbers.formatDecimal(product.price, 1, 'COMMA', 0, 'POINT')}">Rp 12,500,000</td>
+
+                    <td class="py-4 px-6 font-bold"
+                        th:classappend="${product.stock <= 20} ? 'text-red-600' : 'text-gray-700'"
+                        th:text="${product.stock}">15</td>
+
+                    <td class="py-4 px-6 text-center">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="bg-sky hover:bg-maroon text-white font-semibold py-1.5 px-5 rounded shadow-sm transition duration-300 text-sm inline-block">
+                            Detail
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${products == null or #lists.isEmpty(products)}">
+                    <td colspan="6" class="py-8 text-center text-gray-500 italic">
+                        Produk tidak ditemukan.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8 flex flex-wrap gap-4">
+            <a th:href="@{/}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 shadow-sm">
+                Kembali ke Home
+            </a>
+            <a th:href="@{/products}" class="bg-white text-sky border border-sky hover:bg-sky hover:text-white font-semibold py-2 px-6 rounded-lg transition duration-300 shadow-sm">
+                Semua Produk
+            </a>
+        </div>
+
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring MVC Lab</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            DEFAULT: '#800000',
+                            dark: '#5c0000',
+                            light: '#a31a1a'
+                        },
+                        sky: {
+                            DEFAULT: '#87CEEB',
+                            dark: '#5bb4d8',
+                            light: '#b0e2f8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen font-sans text-gray-800">
+
+<nav class="bg-maroon text-white shadow-lg border-b-4 border-sky">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <a th:href="@{/}" class="text-2xl font-extrabold tracking-wide hover:text-sky transition duration-300">
+            Spring MVC Lab
+        </a>
+        <div class="space-x-6 font-medium">
+            <a th:href="@{/}" class="hover:text-sky transition duration-300">Home</a>
+            <a th:href="@{/products}" class="hover:text-sky transition duration-300">Produk</a>
+            <a th:href="@{/statistics}" class="hover:text-sky transition duration-300">Statistik</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container mx-auto px-6 py-10 flex-grow" th:replace="${content}">
+</main>
+
+<footer class="bg-maroon text-white text-center py-6 mt-auto border-t-4 border-sky shadow-inner">
+    <p class="font-medium">Spring MVC Lab &copy; 2026 | WEB-202 Week 4</p>
+    <p class="text-sm mt-2 text-gray-200">Developed by: <span class="text-sky font-bold">Ellen Gabriela Serumena</span></p>
+</footer>
+
+</body>
+</html>
